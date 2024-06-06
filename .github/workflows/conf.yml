@@ -15,22 +15,6 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         target: 'https://sonarcloud.io/summary/overall?id=Haitam-AJ_webapp'
-        name: ZAP Scan
-
-on: [push, pull_request]
-
-jobs:
-  zap_scan:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: ZAP Scan
-      uses: zaproxy/action-baseline@v0.10.0  # Update to the latest version
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        target: 'https://sonarcloud.io/summary/overall?id=Haitam-AJ_webapp'
-        rules_file_name: '.github/zap_rules.tsv'
-
+        rules_file: '.github/zap_rules.tsv'
+        issue_title: 'ZAP Baseline Scan'
+        artifact_name: 'zap-baseline-report'
