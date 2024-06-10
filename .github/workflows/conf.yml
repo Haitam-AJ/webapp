@@ -1,20 +1,48 @@
-name: ZAP Scan
+name: StackHawk Scan
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
-  zap_scan:
+  run-stackhawk:
     runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    services:
+      docker:
+        image: docker:19.03.12
+        options: --privileged
+        ports:
+          - 5000:5000
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
 
-    - name: ZAP Scan
-      uses: zaproxy/action-baseline@v0.10.0  # Update to the latest version
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v1
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        target: 'https://sonarcloud.io/summary/overall?id=Haitam-AJ_webapp'
-        rules_file: '.github/zap_rules.tsv'
-        issue_title: 'ZAP Baseline Scan'
-        artifact_name: 'zap-baseline-report'
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      run: docker-compose up -d
+
+    - name: Run StackHawk Scan
+      uses: stackhawk/hawk-github-action@v2
+      with:
+        apiKey: ${{ secrets.GITHUBKEY }}
+        appId: 11ccfee0-759e-48f1-b00c-6ac3aabcce49
+        environment: development
+        scanTimeout: 600  # Set a timeout for the scan if needed
+
+    - name: Tear down
+      run: docker-compose down
+
